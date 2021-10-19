@@ -2,7 +2,7 @@ SHELL = /bin/sh
 
 CC = gcc
 CFLAGS = -I.
-OBJS =  main.o
+OBJS =  main.o json.o
 
 CJson:${OBJS}
 	${CC} ${CFLAGS} ${OBJS} -o $@  ${LIBS}
