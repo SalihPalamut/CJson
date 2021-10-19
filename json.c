@@ -204,5 +204,218 @@ char* json_serialize(const json_t * array)
 	return serialize;
 }
 
+void json_free_array(array_t ** array)
+{
+
+	array_t *P = *array;
+	if(P->type == 's')
+	{
+		for(int i = 0; i < P->size; i++)
+			free(P->array.Char[i]);
+
+	}
+
+	free(P->array.Char);
+	free(P);
+
+}
+
+array_t * json_parse_array(char * array)
+{
+	array_t * a = 0;
+	char *p = array;
+	int n = 0, m = 0;
+	char c = 'd', *tmp;
+	if(*(p + 1) == '"')c = 's';
+
+	switch(c)
+	{
+		case 's':
+			a = calloc(1, sizeof(array_t));
+			p++;
+			while(*p)
+			{
+				m = 0;
+				a->array.Char = (char**)realloc(a->array.Char, (n + 1) * sizeof(char*));
+				while(*p != ',' && *p != ']')
+				{
+					m++;
+					p++;
+				}
+				a->array.Char[n] = calloc(1, m);
+				memcpy(a->array.Char[n], (p - m + 1), m - 2);
+				n++;
+				p++;
+
+			}
+
+			break;
+		case 'd':
+			a = calloc(1, sizeof(array_t));
+			p++;
+			while(*p)
+			{
+				m = 0;
+				a->array.Int = (int*)realloc(a->array.Int, (n + 1) * sizeof(int*));
+				while(*p != ',' && *p != ']')
+				{
+					m++;
+					p++;
+				}
+				tmp = calloc(1, m);
+				memcpy(tmp, (p - m), m);
+				a->array.Int[n] = atoi(tmp);
+
+				n++;
+				p++;
+				free(tmp);
+			}
+			break;
+	}
+	a->type = c;
+	a->size = n;
+	return a;
+}
+
+int json_deserialized(json_t ** array, char * json_str)
+{
+	char * p = json_str;
+	int valid = -1, n = 0, i = 0;;
+	char *data[2];
+	while(*p)
+	{
+
+		switch(*p)
+		{
+			case '{':
+				if(valid == -1)
+					valid = 0;
+				else if(!valid)
+				{
+
+					p++;
+					n = 0;
+					while(*p != '}')
+					{
+						n++;
+						p++;
+					}
+					n++;
+
+					data[i] = calloc(1, n + 2);
+					memcpy(data[i], (p - n), n + 1);
+				}
+				break;
+			case '}':
+				valid = 1;
+				i++;
+				break;
+			case '"':
+				p++;
+				n = 0;
+				while(*p != '"')
+				{
+					n++;
+					p++;
+				}
+				data[i] = calloc(1, n + 1);
+				memcpy(data[i], (p - n), n);
+				break;
+
+			case '[':
+				//p++;
+				n = 0;
+				while(*p != ']')
+				{
+					n++;
+					p++;
+				}
+				data[i] = calloc(1, n + 2);
+				memcpy(data[i], (p - n), n + 1);
+				break;
+
+			case ':':
+				i++;
+				break;
+			case ',':
+				i++;
+				break;
+			default:
+
+				n = 0;
+				while(*p != ',' && *p != '}')
+				{
+					n++;
+					p++;
+				}
+				data[i] = calloc(1, n + 1);
+				memcpy(data[i], (p - n), n);
+				i++;
+				break;
+
+		}
+
+		p++;
+		if(i == 2)
+		{
+#ifdef Debug
+			printf("%s %s", data[0], data[1]);
+#endif // Debug
+			json_add(array, data[0], data[1]);
+			free(data[0]);
+			free(data[1]);
+			i = 0;
+		}
+
+	}
+
+	return valid;
+}
+
+
+
+json_value json_get_value(const json_t * array, char * key)
+{
+	const json_t * current = array;
+
+	array_t *a = 0;
+	json_t * o = 0;
+	char *s = 0;
+
+	while(current)
+	{
+
+		if(!strcmp(current->id.data, key))
+		{
+
+			switch(current->type)
+			{
+				case 'b':
+				case 'c':
+					return (json_value)current->val.data[0];
+				case 'd':
+					return (json_value)atoi(current->val.data);
+				case 'f':
+					return (json_value)atof(current->val.data);
+				case 'h':
+					return (json_value)((int)strtol(current->val.data, NULL, 16));
+				case 'o':
+					json_deserialized(&o, current->val.data);
+					return (json_value)o;
+				case 'a':
+					a = json_parse_array(current->val.data);
+					return (json_value)a;
+				case 's':
+					s = calloc(1, current->val.size + 1);
+					memcpy(s, current->val.data, current->val.size);
+					return (json_value)s;
+			}
+
+		}
+
+		current = current->next;
+	}
+	return (json_value)0;
+}
 
 

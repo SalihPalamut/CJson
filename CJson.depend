@@ -1,0 +1,16 @@
+# depslib dependency file v1.0
+1634664738 source:/home/salih/codeblocks/CJson/json.c
+	"json.h"
+
+1634639892 /home/salih/codeblocks/CJson/json.h
+	<stdint.h>
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<ctype.h>
+
+1634663473 source:/home/salih/codeblocks/CJson/main.c
+	<stdio.h>
+	<stdlib.h>
+	"json.h"
+
