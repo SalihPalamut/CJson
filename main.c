@@ -17,7 +17,7 @@ int main()
 	json_add(&p, "Pass", "1/asd*af");
 	json_add(&p, "Age", "31");
 	json_add(&p, "Kg", "70");
-	json_add(&p, "DArray", "[10,11,12]");
+	json_add(&p, "DArray", "[0xff,0xa,-1,0,1,08]");
 	json_add(&p, "CArray", "[\"abc\",\"def\",\"ghij\"]");
 	json_add(&p, "Object", serialized);
 	free(serialized);
@@ -88,5 +88,6 @@ int main()
 
 	json_free(&Obj);
 	json_free(&L);
+
 	return 0;
 }

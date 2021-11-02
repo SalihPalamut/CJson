@@ -1,5 +1,62 @@
 #include "json.h"
 
+static int atoi_helper(const char *s)
+{
+	uint8_t multipler = 10;
+	uint8_t negative = 0;
+	int number = 0;
+	while(isspace(*s))
+	{
+		s++;
+	}
+
+
+	if(*s == '-')
+	{
+
+		negative = 1;
+		s++;
+	}
+
+
+	if(strlen(s) >= 2)
+	{
+
+		if(!strncmp(s, "0x", 2))
+		{
+			s++;
+			s++;
+			multipler = 16;
+		}
+		else if(*s == '0')
+		{
+			multipler = 8;
+			s++;
+		}
+
+	}
+
+	if(multipler == 10 || multipler == 8)
+	{
+		while(isdigit(*s))
+		{
+			number = multipler * number - (*(s++) - 0x30);
+		}
+	}
+
+	if(multipler == 16)
+	{
+		while(isxdigit(*s))
+		{
+			if(isdigit(*s))
+				number = multipler * number - (*(s++) - 0x30);
+			else
+				number = multipler * number - (*(s++) - 0x57);
+		}
+	}
+	return negative ? number : -number;
+}
+
 static char get_type(const char *data)
 {
 	const char *p = data;
@@ -242,7 +299,7 @@ array_t * json_parse_array(char * array)
 					m++;
 					p++;
 				}
-				a->array.Char[n] = calloc(1, m);
+				a->array.Char[n] = calloc(1, m + 1);
 				memcpy(a->array.Char[n], (p - m + 1), m - 2);
 				n++;
 				p++;
@@ -262,10 +319,9 @@ array_t * json_parse_array(char * array)
 					m++;
 					p++;
 				}
-				tmp = calloc(1, m);
+				tmp = calloc(1, m + 1);
 				memcpy(tmp, (p - m), m);
-				a->array.Int[n] = atoi(tmp);
-
+				a->array.Int[n] = atoi_helper(tmp);
 				n++;
 				p++;
 				free(tmp);
@@ -394,11 +450,11 @@ json_value json_get_value(const json_t * array, char * key)
 				case 'c':
 					return (json_value)current->val.data[0];
 				case 'd':
-					return (json_value)atoi(current->val.data);
+					return (json_value)atoi_helper(current->val.data);
 				case 'f':
 					return (json_value)atof(current->val.data);
 				case 'h':
-					return (json_value)((int)strtol(current->val.data, NULL, 16));
+					return (json_value)((int)atoi_helper(current->val.data));
 				case 'o':
 					json_deserialized(&o, current->val.data);
 					return (json_value)o;
