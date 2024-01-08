@@ -160,9 +160,17 @@ void json_add(json_t ** array, char * key, char * data)
 	memcpy(new_node->id.data, key, new_node->id.size);
 
 	new_node->val.size = strlen(data);
-	new_node->val.data = calloc(1, new_node->val.size + 1);
-	memcpy(new_node->val.data, data, new_node->val.size);
+	if(data[0] == '"')
+	{
+		new_node->val.data = calloc(1, new_node->val.size);
+		memcpy(new_node->val.data, &data[1], new_node->val.size);
+	}
+	else
+	{
 
+		new_node->val.data = calloc(1, new_node->val.size + 1);
+		memcpy(new_node->val.data, data, new_node->val.size);
+	}
 	new_node->type = get_type(data);
 
 }
@@ -374,8 +382,14 @@ int json_deserialized(json_t ** array, char * json_str)
 					n++;
 					p++;
 				}
-				data[i] = calloc(1, n + 1);
-				memcpy(data[i], (p - n), n);
+				data[i] = calloc(1, n + 3);
+				if(i)
+				{
+					data[i][0] = '"';
+					memcpy(data[i] + 1, (p - n), n);
+				}
+				else
+					memcpy(data[i], (p - n), n);
 				break;
 
 			case '[':
@@ -415,7 +429,7 @@ int json_deserialized(json_t ** array, char * json_str)
 		if(i == 2)
 		{
 #ifdef Debug
-			printf("%s %s", data[0], data[1]);
+			printf("%s %s\n", data[0], data[1]);
 #endif // Debug
 			json_add(array, data[0], data[1]);
 			free(data[0]);
@@ -428,8 +442,6 @@ int json_deserialized(json_t ** array, char * json_str)
 	return valid;
 }
 
-
-
 json_value json_get_value(const json_t * array, char * key)
 {
 	const json_t * current = array;
@@ -440,7 +452,9 @@ json_value json_get_value(const json_t * array, char * key)
 
 	while(current)
 	{
-
+#ifdef Debug
+		printf("%s %c\n", current->id.data, current->type);
+#endif // Debug
 		if(!strcmp(current->id.data, key))
 		{
 
@@ -473,5 +487,3 @@ json_value json_get_value(const json_t * array, char * key)
 	}
 	return (json_value)0;
 }
-
-
